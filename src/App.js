@@ -1,9 +1,17 @@
 import { useState } from 'react';
 import { supabase } from './supabaseClient';
 import questoes from './questoes.json';
+import seedrandom from 'seedrandom';
+
+function embaralharComSeed(array, ra) {
+  const rng = seedrandom(ra);
+  const copia = [...array];
+  return copia.sort(() => rng() - 0.5);
+}
 
 export default function App() {
   const [ra, setRa] = useState('');
+  const [listaQuestoes, setListaQuestoes] = useState([]); 
   const [iniciou, setIniciou] = useState(false);
   const [indiceAtual, setIndiceAtual] = useState(0);
   const [respostas, setRespostas] = useState({});
@@ -16,6 +24,11 @@ export default function App() {
     if (!ra.trim()) return;
 
     setCarregando(true);
+
+    // 1. Embaralha com o RA e salva no estado
+    const embaralhadas = embaralharComSeed(questoes, ra.trim());
+    setListaQuestoes(embaralhadas);
+
     const { data } = await supabase
       .from('avaliacoes')
       .select('questao_id, nota')
@@ -27,19 +40,19 @@ export default function App() {
     }
     setRespostas(historico);
 
-    // Encontra a primeira questão que o aluno ainda não respondeu
-    const proximaNaoRespondida = questoes.findIndex(q => historico[q.id] === undefined);
+    // 2. Busca a primeira não respondida
+    const proximaNaoRespondida = embaralhadas.findIndex(q => historico[q.id] === undefined);
     const indiceInicial = proximaNaoRespondida === -1 ? 0 : proximaNaoRespondida;
     
     setIndiceAtual(indiceInicial);
-    setNotaAtual(historico[questoes[indiceInicial]?.id] ?? 3);
+    setNotaAtual(historico[embaralhadas[indiceInicial]?.id] ?? 3);
     setCarregando(false);
     setIniciou(true);
   }
 
   // 2. Salva a resposta no Supabase e vai para a próxima
   async function salvarEAvancar() {
-    const questao = questoes[indiceAtual];
+    const questao = listaQuestoes[indiceAtual];
 
     // Atualiza localmente
     const novasRespostas = { ...respostas, [questao.id]: Number(notaAtual) };
@@ -53,13 +66,13 @@ export default function App() {
     }, { onConflict: 'ra, questao_id' });
 
     // Avança para a próxima questão
-    if (indiceAtual < questoes.length - 1) {
+    if (indiceAtual < listaQuestoes.length - 1) {
       const proxIndice = indiceAtual + 1;
       setIndiceAtual(proxIndice);
       // Se ele já tinha respondido a próxima antes, preenche o slider com a nota anterior
-      setNotaAtual(novasRespostas[questoes[proxIndice].id] ?? 3);
+      setNotaAtual(novasRespostas[listaQuestoes[proxIndice].id] ?? 3);
     } else {
-      setIndiceAtual(questoes.length); // Chegou ao fim
+      setIndiceAtual(listaQuestoes.length); // Chegou ao fim
     }
   }
 
@@ -67,7 +80,7 @@ export default function App() {
     if (indiceAtual > 0) {
       const prevIndice = indiceAtual - 1;
       setIndiceAtual(prevIndice);
-      setNotaAtual(respostas[questoes[prevIndice].id] ?? 3);
+      setNotaAtual(respostas[listaQuestoes[prevIndice].id] ?? 3);
     }
   }
 
@@ -81,7 +94,6 @@ export default function App() {
           <form onSubmit={entrarComRA}>
             <input
               type="text"
-              placeholder="Ex: 2104928"
               value={ra}
               onChange={(e) => setRa(e.target.value)}
               style={styles.input}
@@ -98,12 +110,12 @@ export default function App() {
   }
 
   // TELA 3: Concluído
-  if (indiceAtual >= questoes.length) {
+  if (indiceAtual >= listaQuestoes.length) {
     return (
       <div style={styles.container}>
         <div style={styles.card}>
           <h2>🎉 Parabéns!</h2>
-          <p>Você avaliou todas as {questoes.length} questões disponíveis.</p>
+          <p>Você avaliou todas as {listaQuestoes.length} questões disponíveis.</p>
           <p>Seus dados estão salvos no RA: <strong>{ra}</strong></p>
           <button onClick={() => setIndiceAtual(0)} style={styles.btnSecondary}>
             Revisar respostas desde a Questão 1
@@ -114,7 +126,7 @@ export default function App() {
   }
 
   // TELA 2: Questionário
-  const questao = questoes[indiceAtual];
+  const questao = listaQuestoes[indiceAtual];
   const labels = [
     '0 - Não tenho ideia de como resolver',
     '1 - Muito difícil / Sei quase nada',
@@ -129,7 +141,7 @@ export default function App() {
       <div style={styles.card}>
         <div style={styles.header}>
           <span>RA: <strong>{ra}</strong></span>
-          <span>Questão {indiceAtual + 1} de {questoes.length}</span>
+          <span>Questão {indiceAtual + 1} de {listaQuestoes.length}</span>
         </div>
 
         <div style={styles.boxTexto}>
@@ -159,7 +171,7 @@ export default function App() {
             ← Voltar
           </button>
           <button onClick={salvarEAvancar} style={styles.btnPrimary}>
-            {indiceAtual === questoes.length - 1 ? 'Finalizar ✓' : 'Confirmar e Próxima →'}
+            {indiceAtual === listaQuestoes.length - 1 ? 'Finalizar ✓' : 'Confirmar e Próxima →'}
           </button>
         </div>
       </div>
