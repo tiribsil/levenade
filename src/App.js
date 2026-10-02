@@ -12,11 +12,20 @@ const questoes = contextoQuestoes.keys().map((caminho) => {
   return id;
 }).sort();
 
-
 function embaralharComSeed(array, ra) {
   const rng = seedrandom(ra);
   const copia = [...array];
   return copia.sort(() => rng() - 0.5);
+}
+
+function formatarTituloQuestao(id) {
+  const match = id.match(/^(\d{4})([DOdo])(\d+)$/);
+  if (!match) return id;
+
+  const [, ano, tipo, numero] = match;
+  const tipoExtenso = tipo.toUpperCase() === 'O' ? 'Objetiva' : 'Dissertativa';
+  
+  return `Questão ${tipoExtenso} ${numero}, ${ano}`;
 }
 
 export default function App() {
@@ -150,8 +159,10 @@ export default function App() {
         <div style={styles.header}>
           <span>RA: <strong>{ra}</strong></span>
           <span>
-            Questão {indiceAtual + 1} de {listaQuestoes.length} 
-            <small style={{ color: '#888', marginLeft: '6px' }}>({questaoId})</small>
+            Questão {indiceAtual + 1} de {listaQuestoes.length}
+            <small style={{ color: '#888', marginLeft: '8px' }}>
+              ({formatarTituloQuestao(questaoId)})
+            </small>
           </span>
         </div>
 
