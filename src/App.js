@@ -1,7 +1,17 @@
 import { useState } from 'react';
 import { supabase } from './supabaseClient';
-import questoes from './questoes.json';
 import seedrandom from 'seedrandom';
+
+// 1. Faz a leitura automática da pasta src/questoes
+const contextoQuestoes = require.context('./questoes', false, /\.png$/);
+const imagensQuestoes = {};
+
+const questoes = contextoQuestoes.keys().map((caminho) => {
+  const id = caminho.replace('./', '').replace('.png', '');
+  imagensQuestoes[id] = contextoQuestoes(caminho);
+  return id;
+}).sort();
+
 
 function embaralharComSeed(array, ra) {
   const rng = seedrandom(ra);
@@ -25,7 +35,7 @@ export default function App() {
 
     setCarregando(true);
 
-    // 1. Embaralha com o RA e salva no estado
+    // Embaralha as questões para este RA
     const embaralhadas = embaralharComSeed(questoes, ra.trim());
     setListaQuestoes(embaralhadas);
 
@@ -40,28 +50,28 @@ export default function App() {
     }
     setRespostas(historico);
 
-    // 2. Busca a primeira não respondida
-    const proximaNaoRespondida = embaralhadas.findIndex(q => historico[q.id] === undefined);
+    // Encontra a primeira questão não respondida (aqui usa diretamente o ID)
+    const proximaNaoRespondida = embaralhadas.findIndex(id => historico[id] === undefined);
     const indiceInicial = proximaNaoRespondida === -1 ? 0 : proximaNaoRespondida;
     
     setIndiceAtual(indiceInicial);
-    setNotaAtual(historico[embaralhadas[indiceInicial]?.id] ?? 3);
+    setNotaAtual(historico[embaralhadas[indiceInicial]] ?? 3);
     setCarregando(false);
     setIniciou(true);
   }
 
   // 2. Salva a resposta no Supabase e vai para a próxima
   async function salvarEAvancar() {
-    const questao = listaQuestoes[indiceAtual];
+    const questaoId = listaQuestoes[indiceAtual]; // Ex: "2021D3"
 
     // Atualiza localmente
-    const novasRespostas = { ...respostas, [questao.id]: Number(notaAtual) };
+    const novasRespostas = { ...respostas, [questaoId]: Number(notaAtual) };
     setRespostas(novasRespostas);
 
-    // Salva no banco (upsert = se já existe, atualiza; se não, cria)
+    // Salva no Supabase
     await supabase.from('avaliacoes').upsert({
       ra: ra.trim(),
-      questao_id: questao.id,
+      questao_id: questaoId,
       nota: Number(notaAtual)
     }, { onConflict: 'ra, questao_id' });
 
@@ -69,10 +79,9 @@ export default function App() {
     if (indiceAtual < listaQuestoes.length - 1) {
       const proxIndice = indiceAtual + 1;
       setIndiceAtual(proxIndice);
-      // Se ele já tinha respondido a próxima antes, preenche o slider com a nota anterior
-      setNotaAtual(novasRespostas[listaQuestoes[proxIndice].id] ?? 3);
+      setNotaAtual(novasRespostas[listaQuestoes[proxIndice]] ?? 3);
     } else {
-      setIndiceAtual(listaQuestoes.length); // Chegou ao fim
+      setIndiceAtual(listaQuestoes.length); // Fim
     }
   }
 
@@ -80,7 +89,7 @@ export default function App() {
     if (indiceAtual > 0) {
       const prevIndice = indiceAtual - 1;
       setIndiceAtual(prevIndice);
-      setNotaAtual(respostas[listaQuestoes[prevIndice].id] ?? 3);
+      setNotaAtual(respostas[listaQuestoes[prevIndice]] ?? 3);
     }
   }
 
@@ -114,11 +123,11 @@ export default function App() {
     return (
       <div style={styles.container}>
         <div style={styles.card}>
-          <h2>🎉 Parabéns!</h2>
+          <h2>Parabéns!</h2>
           <p>Você avaliou todas as {listaQuestoes.length} questões disponíveis.</p>
           <p>Seus dados estão salvos no RA: <strong>{ra}</strong></p>
           <button onClick={() => setIndiceAtual(0)} style={styles.btnSecondary}>
-            Revisar respostas desde a Questão 1
+            Revisar respostas.
           </button>
         </div>
       </div>
@@ -126,14 +135,13 @@ export default function App() {
   }
 
   // TELA 2: Questionário
-  const questao = listaQuestoes[indiceAtual];
+  const questaoId = listaQuestoes[indiceAtual];
   const labels = [
-    '0 - Não tenho ideia de como resolver',
-    '1 - Muito difícil / Sei quase nada',
-    '2 - Difícil / Travaria no caminho',
-    '3 - Média / Conseguiria com esforço',
-    '4 - Fácil / Sei o caminho',
-    '5 - Muito fácil / Sei resolver perfeitamente'
+    '1 - Não tenho ideia de como resolver',
+    '2 - Lembro muito pouco, não conseguiria chegar a uma resposta',
+    '3 - Sei mais ou menos como resolver, talvez consiga chegar em uma resposta',
+    '4 - Sei resolver, mas não teria certeza da resposta',
+    '5 - Sei resolver com certeza da resposta'
   ];
 
   return (
@@ -141,25 +149,32 @@ export default function App() {
       <div style={styles.card}>
         <div style={styles.header}>
           <span>RA: <strong>{ra}</strong></span>
-          <span>Questão {indiceAtual + 1} de {listaQuestoes.length}</span>
+          <span>
+            Questão {indiceAtual + 1} de {listaQuestoes.length} 
+            <small style={{ color: '#888', marginLeft: '6px' }}>({questaoId})</small>
+          </span>
         </div>
 
         <div style={styles.boxTexto}>
-          <p style={styles.enunciado}>{questao.texto}</p>
+          <img 
+            src={imagensQuestoes[questaoId]} 
+            alt={`Questão ${questaoId}`} 
+            style={{ width: '100%', height: 'auto', display: 'block', margin: '0 auto' }} 
+          />
         </div>
 
         <div style={styles.sliderContainer}>
           <label style={{ fontWeight: 'bold' }}>Sua facilidade com a questão:</label>
           <input
             type="range"
-            min="0"
+            min="1"
             max="5"
             step="1"
             value={notaAtual}
             onChange={(e) => setNotaAtual(e.target.value)}
             style={{ width: '100%', margin: '15px 0' }}
           />
-          <div style={styles.labelNota}>{labels[notaAtual]}</div>
+          <div style={styles.labelNota}>{labels[notaAtual - 1]}</div>
         </div>
 
         <div style={styles.buttonGroup}>
@@ -185,7 +200,6 @@ const styles = {
   card: { maxWidth: '700px', width: '100%', background: '#fff', border: '1px solid #ddd', borderRadius: '8px', padding: '24px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' },
   header: { display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #eee', paddingBottom: '10px', color: '#666', fontSize: '14px' },
   boxTexto: { background: '#f9f9f9', padding: '16px', borderRadius: '6px', margin: '20px 0', border: '1px solid #eee' },
-  enunciado: { fontSize: '18px', lineHeight: '1.6', margin: 0, whiteSpace: 'pre-wrap' },
   sliderContainer: { textAlign: 'center', margin: '25px 0' },
   labelNota: { fontSize: '15px', color: '#0056b3', fontWeight: 'bold' },
   buttonGroup: { display: 'flex', justifyContent: 'space-between', marginTop: '20px' },
