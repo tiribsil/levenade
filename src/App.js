@@ -108,8 +108,9 @@ export default function App() {
     return (
       <div style={styles.container}>
         <div style={styles.card}>
-          <h2>Priorização ENADE</h2>
-          <p>Digite seu RA para carregar ou iniciar suas avaliações:</p>
+          <h2>LevENADE</h2>
+          <p>Essa é uma aplicação para levantamento de dificuldade das questões dos ENADEs passados, ajudando a comissão a focar nos assuntos mais importantes nos encontros de apoio.</p>
+          <p>Digite seu RA para iniciar ou continuar suas avaliações:</p>
           <form onSubmit={entrarComRA}>
             <input
               type="text"
@@ -120,7 +121,7 @@ export default function App() {
             />
             <br />
             <button type="submit" disabled={carregando} style={styles.btnPrimary}>
-              {carregando ? 'Buscando...' : 'Entrar / Continuar'}
+              {carregando ? 'Buscando...' : 'Entrar'}
             </button>
           </form>
         </div>
