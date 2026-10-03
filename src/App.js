@@ -207,10 +207,10 @@ export default function App() {
             disabled={indiceAtual === 0}
             style={indiceAtual === 0 ? styles.btnDisabled : styles.btnSecondary}
           >
-            ← Voltar
+            Voltar
           </button>
           <button onClick={salvarEAvancar} style={styles.btnPrimary}>
-            {indiceAtual === listaQuestoes.length - 1 ? 'Finalizar ✓' : 'Confirmar e Próxima →'}
+            {indiceAtual === listaQuestoes.length - 1 ? 'Finalizar' : 'Confirmar'}
           </button>
         </div>
       </div>
