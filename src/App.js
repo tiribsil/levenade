@@ -36,6 +36,7 @@ export default function App() {
   const [respostas, setRespostas] = useState({});
   const [notaAtual, setNotaAtual] = useState(3);
   const [carregando, setCarregando] = useState(false);
+  const [larguraTotal, setLarguraTotal] = useState(true);
 
   // 1. Ao digitar o RA, busca o que o aluno já respondeu antes
   async function entrarComRA(e) {
@@ -168,9 +169,20 @@ export default function App() {
 
         <div style={styles.boxTexto}>
           <img 
+            key={questaoId}
             src={imagensQuestoes[questaoId]} 
             alt={`Questão ${questaoId}`} 
-            style={{ width: '100%', height: 'auto', display: 'block', margin: '0 auto' }} 
+            onLoad={(e) => {
+              // Verifica se a largura original do arquivo é maior que 500px
+              const ehMaiorQue500 = e.currentTarget.naturalWidth > 500;
+              setLarguraTotal(ehMaiorQue500);
+            }}
+            style={{ 
+              width: larguraTotal ? '100%' : '50%', 
+              height: 'auto', 
+              display: 'block', 
+              margin: '0 auto' 
+            }} 
           />
         </div>
 
