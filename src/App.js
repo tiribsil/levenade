@@ -125,6 +125,25 @@ export default function App() {
               {carregando ? 'Buscando...' : 'Entrar'}
             </button>
           </form>
+          <p style={{
+            marginTop: '25px',
+            fontSize: '13px',
+            textAlign: 'center',
+            color: '#666'
+          }}>
+            Para consultar as provas e gabaritos,{' '}
+            <a
+              href="https://www.gov.br/inep/pt-br/areas-de-atuacao/avaliacao-e-exames-educacionais/enade/provas-e-gabaritos"
+              target="_blank"
+              rel="noreferrer"
+              style={{
+                color: '#0066cc',
+                textDecoration: 'underline'
+              }}
+            >
+              clique aqui
+            </a>.
+          </p>
         </div>
       </div>
     );
