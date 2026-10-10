@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { supabase } from './supabaseClient';
 import seedrandom from 'seedrandom';
+import areas from './questoes/areas.json';
 
 // 1. Faz a leitura automática da pasta src/questoes
 const contextoQuestoes = require.context('./questoes', false, /\.png$/);
@@ -169,6 +170,20 @@ export default function App() {
         </div>
 
         <div style={styles.boxTexto}>
+          {areas[questaoId] && (
+            <div style={{
+              fontSize: '12px',
+              fontWeight: '600',
+              textTransform: 'uppercase',
+              letterSpacing: '0.5px',
+              color: darkMode ? '#aaa' : '#666',
+              textAlign: 'center',
+              marginBottom: '10px'
+            }}>
+              {areas[questaoId]}
+            </div>
+          )}
+
           <img 
             key={questaoId}
             src={imagensQuestoes[questaoId]} 
