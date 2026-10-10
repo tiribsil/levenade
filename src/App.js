@@ -176,7 +176,7 @@ export default function App() {
               fontWeight: '600',
               textTransform: 'uppercase',
               letterSpacing: '0.5px',
-              color: darkMode ? '#aaa' : '#666',
+              color: '#666',
               textAlign: 'center',
               marginBottom: '10px'
             }}>
