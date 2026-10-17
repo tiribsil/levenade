@@ -13,6 +13,16 @@ const questoes = contextoQuestoes.keys().map((caminho) => {
   return id;
 }).sort();
 
+const questoesPorArea = {};
+questoes.forEach((id) => {
+  const area = areas[id] || 'Outras';
+  if (!questoesPorArea[area]) questoesPorArea[area] = [];
+  questoesPorArea[area].push(id);
+});
+Object.keys(questoesPorArea).forEach((area) => {
+  questoesPorArea[area].sort();
+});
+
 function embaralharComSeed(array, ra) {
   const rng = seedrandom(ra);
   const copia = [...array];
@@ -35,9 +45,11 @@ export default function App() {
   const [iniciou, setIniciou] = useState(false);
   const [indiceAtual, setIndiceAtual] = useState(0);
   const [respostas, setRespostas] = useState({});
-  const [notaAtual, setNotaAtual] = useState(3);
+  const [notaAtual, setNotaAtual] = useState(null);
   const [carregando, setCarregando] = useState(false);
   const [larguraTotal, setLarguraTotal] = useState(true);
+  const [emGaleria, setEmGaleria] = useState(false);
+  const [questaoDetalhe, setQuestaoDetalhe] = useState(null);
 
   // 1. Ao digitar o RA, busca o que o aluno já respondeu antes
   async function entrarComRA(e) {
@@ -66,7 +78,7 @@ export default function App() {
     const indiceInicial = proximaNaoRespondida === -1 ? 0 : proximaNaoRespondida;
     
     setIndiceAtual(indiceInicial);
-    setNotaAtual(historico[embaralhadas[indiceInicial]] ?? 3);
+    setNotaAtual(historico[embaralhadas[indiceInicial]] ?? null);
     setCarregando(false);
     setIniciou(true);
   }
@@ -90,7 +102,7 @@ export default function App() {
     if (indiceAtual < listaQuestoes.length - 1) {
       const proxIndice = indiceAtual + 1;
       setIndiceAtual(proxIndice);
-      setNotaAtual(novasRespostas[listaQuestoes[proxIndice]] ?? 3);
+      setNotaAtual(novasRespostas[listaQuestoes[proxIndice]] ?? null);
     } else {
       setIndiceAtual(listaQuestoes.length); // Fim
     }
@@ -100,10 +112,145 @@ export default function App() {
     if (indiceAtual > 0) {
       const prevIndice = indiceAtual - 1;
       setIndiceAtual(prevIndice);
-      setNotaAtual(respostas[listaQuestoes[prevIndice]] ?? 3);
+      setNotaAtual(respostas[listaQuestoes[prevIndice]] ?? null);
     }
   }
 
+  // TELA EXTRA 1: Visualizador de questão ampliada (da Galeria)
+  if (emGaleria && questaoDetalhe) {
+    const areaAtual = areas[questaoDetalhe] || 'Outras';
+    const listaArea = questoesPorArea[areaAtual] || [];
+    const indiceNaArea = listaArea.indexOf(questaoDetalhe);
+
+    return (
+      <div style={styles.container}>
+        <div style={styles.card}>
+          <div style={styles.header}>
+            <span>Área: <strong>{areaAtual}</strong></span>
+            <span>
+              {indiceNaArea + 1} de {listaArea.length}
+              <small style={{ color: '#888', marginLeft: '6px' }}>
+                ({formatarTituloQuestao(questaoDetalhe)})
+              </small>
+            </span>
+          </div>
+
+          <div style={styles.boxTexto}>
+            <img 
+              key={questaoDetalhe}
+              src={imagensQuestoes[questaoDetalhe]} 
+              alt={`Questão ${questaoDetalhe}`} 
+              onLoad={(e) => {
+                setLarguraTotal(e.currentTarget.naturalWidth > 500);
+              }}
+              style={{ 
+                width: larguraTotal ? '100%' : '50%', 
+                height: 'auto', 
+                display: 'block', 
+                margin: '0 auto' 
+              }} 
+            />
+          </div>
+
+          <div style={styles.buttonGroup}>
+            <button 
+              onClick={() => setQuestaoDetalhe(listaArea[indiceNaArea - 1])}
+              disabled={indiceNaArea === 0}
+              style={indiceNaArea === 0 ? styles.btnDisabled : styles.btnSecondary}
+            >
+              ← Questão Anterior
+            </button>
+
+            <button 
+              onClick={() => setQuestaoDetalhe(null)}
+              style={styles.btnSecondary}
+            >
+              Voltar para a Galeria
+            </button>
+
+            <button 
+              onClick={() => setQuestaoDetalhe(listaArea[indiceNaArea + 1])}
+              disabled={indiceNaArea === listaArea.length - 1}
+              style={indiceNaArea === listaArea.length - 1 ? styles.btnDisabled : styles.btnSecondary}
+            >
+              Próxima Questão →
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // TELA EXTRA 2: Galeria de Miniaturas por Área
+  if (emGaleria) {
+    return (
+      <div style={styles.container}>
+        <div style={{ ...styles.card, maxWidth: '900px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+            <h2 style={{ margin: 0 }}>Galeria por Áreas</h2>
+            <button 
+              onClick={() => setEmGaleria(false)}
+              style={styles.btnPrimary}
+            >
+              ← Voltar ao Início
+            </button>
+          </div>
+
+          {Object.entries(questoesPorArea).map(([area, lista]) => (
+            <div key={area} style={{ marginBottom: '25px' }}>
+              <h3 style={{ 
+                borderBottom: `2px solid ${false ? '#444' : '#ddd'}`, 
+                paddingBottom: '6px',
+                fontSize: '16px',
+                color: false ? '#66b2ff' : '#0066cc'
+              }}>
+                {area} ({lista.length} questões)
+              </h3>
+
+              {/* Grade de Miniaturas */}
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))',
+                gap: '10px',
+                marginTop: '10px'
+              }}>
+                {lista.map((id) => (
+                  <div
+                    key={id}
+                    onClick={() => setQuestaoDetalhe(id)}
+                    style={{
+                      border: `1px solid ${false ? '#444' : '#ccc'}`,
+                      borderRadius: '6px',
+                      padding: '5px',
+                      cursor: 'pointer',
+                      textAlign: 'center',
+                      background: false ? '#222' : '#fafafa',
+                      transition: 'transform 0.1s'
+                    }}
+                  >
+                    <img 
+                      src={imagensQuestoes[id]} 
+                      alt={id}
+                      style={{
+                        width: '100%',
+                        height: '80px',
+                        objectFit: 'cover',
+                        borderRadius: '4px'
+                      }} 
+                    />
+                    <div style={{ fontSize: '11px', marginTop: '4px', fontWeight: 'bold' }}>
+                      {id}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+  
   // TELA 1: Identificação por RA
   if (!iniciou) {
     return (
@@ -125,6 +272,30 @@ export default function App() {
               {carregando ? 'Buscando...' : 'Entrar'}
             </button>
           </form>
+          <p style={{
+            marginTop: '20px',
+            fontSize: '13px',
+            textAlign: 'center',
+            color: false ? '#aaa' : '#666'
+          }}>
+            Para ver todas as questões divididas por área de conhecimento,{' '}
+            <button
+              type="button"
+              onClick={() => setEmGaleria(true)}
+              style={{
+                background: 'none',
+                border: 'none',
+                padding: 0,
+                cursor: 'pointer',
+                color: false ? '#66b2ff' : '#0066cc',
+                textDecoration: 'underline',
+                fontSize: '13px',
+                fontFamily: 'inherit'
+              }}
+            >
+              clique aqui
+            </button>.
+          </p>
           <p style={{
             marginTop: '25px',
             fontSize: '13px',
@@ -228,11 +399,17 @@ export default function App() {
             min="1"
             max="5"
             step="1"
-            value={notaAtual}
-            onChange={(e) => setNotaAtual(e.target.value)}
+            value={notaAtual ?? 3}
+            onChange={(e) => setNotaAtual(Number(e.target.value))}
             style={{ width: '100%', margin: '15px 0' }}
           />
-          <div style={styles.labelNota}>{labels[notaAtual - 1]}</div>
+          <div style={{
+            ...styles.labelNota,
+            color: notaAtual === null ? (false ? '#aaa' : '#888') : styles.labelNota.color,
+            fontStyle: notaAtual === null ? 'italic' : 'normal'
+          }}>
+            {notaAtual === null ? 'Mova a barra para classificar.' : labels[notaAtual - 1]}
+          </div>
         </div>
 
         <div style={styles.buttonGroup}>
@@ -243,7 +420,11 @@ export default function App() {
           >
             Voltar
           </button>
-          <button onClick={salvarEAvancar} style={styles.btnPrimary}>
+          <button 
+            onClick={salvarEAvancar} 
+            disabled={notaAtual === null}
+            style={notaAtual === null ? styles.btnDisabled : styles.btnPrimary}
+          >
             {indiceAtual === listaQuestoes.length - 1 ? 'Finalizar' : 'Confirmar'}
           </button>
         </div>
