@@ -192,7 +192,7 @@ export default function App() {
               onClick={() => setEmGaleria(false)}
               style={styles.btnPrimary}
             >
-              ← Voltar ao Início
+              Voltar
             </button>
           </div>
 
@@ -428,6 +428,50 @@ export default function App() {
             {indiceAtual === listaQuestoes.length - 1 ? 'Finalizar' : 'Confirmar'}
           </button>
         </div>
+        <p style={{
+          marginTop: '20px',
+          fontSize: '13px',
+          textAlign: 'center',
+          color: false ? '#aaa' : '#666'
+        }}>
+          Para ver todas as questões divididas por área de conhecimento,{' '}
+          <button
+            type="button"
+            onClick={() => setEmGaleria(true)}
+            style={{
+              background: 'none',
+              border: 'none',
+              padding: 0,
+              cursor: 'pointer',
+              color: false ? '#66b2ff' : '#0066cc',
+              textDecoration: 'underline',
+              fontSize: '13px',
+              fontFamily: 'inherit'
+            }}
+          >
+            clique aqui
+          </button>.
+        </p>
+
+        <p style={{
+          marginTop: '25px',
+          fontSize: '13px',
+          textAlign: 'center',
+          color: '#666'
+        }}>
+          Para consultar as provas e gabaritos,{' '}
+          <a
+            href="https://www.gov.br/inep/pt-br/areas-de-atuacao/avaliacao-e-exames-educacionais/enade/provas-e-gabaritos"
+            target="_blank"
+            rel="noreferrer"
+            style={{
+              color: '#0066cc',
+              textDecoration: 'underline'
+            }}
+          >
+            clique aqui
+          </a>.
+        </p>
       </div>
     </div>
   );
