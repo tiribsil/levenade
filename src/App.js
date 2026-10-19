@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from './supabaseClient';
 import seedrandom from 'seedrandom';
 import areas from './questoes/areas.json';
@@ -114,6 +114,116 @@ export default function App() {
       setIndiceAtual(prevIndice);
       setNotaAtual(respostas[listaQuestoes[prevIndice]] ?? null);
     }
+  }
+
+  // DETECTA SE A URL TERMINA COM #view ou /view
+  const emModoView = window.location.hash === '#view' || window.location.pathname.endsWith('/view');
+  const [dadosEstatisticas, setDadosEstatisticas] = useState([]);
+  const [carregandoStats, setCarregandoStats] = useState(false);
+  const [filtroArea, setFiltroArea] = useState('Todas');
+
+  const dadosFiltrados = dadosEstatisticas.filter((item) => {
+    if (filtroArea === 'Todas') return true;
+    return (areas[item.questao_id] || 'Outras') === filtroArea;
+  });
+
+  async function carregarEstatisticas() {
+    setCarregandoStats(true);
+    const { data } = await supabase
+      .from('estatisticas_questoes')
+      .select('*')
+      .order('media', { ascending: true });
+
+    if (data) setDadosEstatisticas(data);
+    setCarregandoStats(false);
+  }
+
+  useEffect(() => {
+    if (emModoView) {
+      carregarEstatisticas();
+    }
+  }, [emModoView]);
+
+  // TELA DE RELATÓRIO E ESTATÍSTICAS (/view)
+  if (emModoView) {
+    return (
+      <div style={styles.container}>
+        <div style={{ ...styles.card, maxWidth: '950px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '10px' }}>
+            <div>
+              <h2 style={{ margin: 0 }}>Priorização das Questões</h2>
+              <small style={{ color: '#666' }}>Ordenadas da menor facilidade para a maior</small>
+            </div>
+            
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+              <select
+                value={filtroArea}
+                onChange={(e) => setFiltroArea(e.target.value)}
+                style={{
+                  padding: '8px 12px',
+                  borderRadius: '5px',
+                  border: '1px solid #ccc',
+                  fontSize: '14px',
+                  background: '#fff',
+                  cursor: 'pointer'
+                }}
+              >
+                <option value="Todas">Todas as Áreas</option>
+                {Object.keys(questoesPorArea).map((area) => (
+                  <option key={area} value={area}>
+                    {area}
+                  </option>
+                ))}
+              </select>
+
+              <button 
+                onClick={carregarEstatisticas} 
+                disabled={carregandoStats}
+                style={styles.btnPrimary}
+              >
+                {carregandoStats ? 'Atualizando...' : 'Atualizar'}
+              </button>
+            </div>
+          </div>
+
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '14px' }}>
+              <thead>
+                <tr style={{ borderBottom: '2px solid #ddd', background: '#f5f5f5' }}>
+                  <th style={{ padding: '10px' }}>#</th>
+                  <th style={{ padding: '10px' }}>Questão</th>
+                  <th style={{ padding: '10px' }}>Área de Conhecimento</th>
+                  <th style={{ padding: '10px', textAlign: 'center' }}>Média</th>
+                  <th style={{ padding: '10px', textAlign: 'center' }}>Mediana</th>
+                  <th style={{ padding: '10px', textAlign: 'center' }}>Moda</th>
+                  <th style={{ padding: '10px', textAlign: 'center' }}>Desvio Padrão</th>
+                  <th style={{ padding: '10px', textAlign: 'center' }}>Votos</th>
+                </tr>
+              </thead>
+              <tbody>
+                {dadosFiltrados.map((item, idx) => (
+                  <tr key={item.questao_id} style={{ borderBottom: '1px solid #eee' }}>
+                    <td style={{ padding: '10px', fontWeight: 'bold', color: '#666' }}>{idx + 1}º</td>
+                    <td style={{ padding: '10px', fontWeight: 'bold' }}>
+                      {formatarTituloQuestao(item.questao_id)}
+                      <small style={{ color: '#888', display: 'block' }}>({item.questao_id})</small>
+                    </td>
+                    <td style={{ padding: '10px', color: '#555' }}>{areas[item.questao_id] || 'Outras'}</td>
+                    <td style={{ padding: '10px', textAlign: 'center', fontWeight: 'bold', color: '#0066cc', fontSize: '15px' }}>
+                      {item.media}
+                    </td>
+                    <td style={{ padding: '10px', textAlign: 'center' }}>{item.mediana}</td>
+                    <td style={{ padding: '10px', textAlign: 'center' }}>{item.moda}</td>
+                    <td style={{ padding: '10px', textAlign: 'center', color: '#666' }}>±{item.desvio_padrao}</td>
+                    <td style={{ padding: '10px', textAlign: 'center' }}>{item.total_votos}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   // TELA EXTRA 1: Visualizador de questão ampliada (da Galeria)
