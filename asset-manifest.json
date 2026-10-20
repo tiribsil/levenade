@@ -1,7 +1,7 @@
 {
   "files": {
     "main.css": "/levenade/static/css/main.7e65bbfb.css",
-    "main.js": "/levenade/static/js/main.f2b1dd17.js",
+    "main.js": "/levenade/static/js/main.009aa62c.js",
     "static/js/453.b97a5ea9.chunk.js": "/levenade/static/js/453.b97a5ea9.chunk.js",
     "static/media/2021O28.png": "/levenade/static/media/2021O28.1bdf618097097c760d9f.png",
     "static/media/2021O21.png": "/levenade/static/media/2021O21.0288c3ee58742d8a524f.png",
@@ -95,11 +95,11 @@
     "static/media/2014O23.png": "/levenade/static/media/2014O23.5f20718fe8cd23c49038.png",
     "index.html": "/levenade/index.html",
     "main.7e65bbfb.css.map": "/levenade/static/css/main.7e65bbfb.css.map",
-    "main.f2b1dd17.js.map": "/levenade/static/js/main.f2b1dd17.js.map",
+    "main.009aa62c.js.map": "/levenade/static/js/main.009aa62c.js.map",
     "453.b97a5ea9.chunk.js.map": "/levenade/static/js/453.b97a5ea9.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.7e65bbfb.css",
-    "static/js/main.f2b1dd17.js"
+    "static/js/main.009aa62c.js"
   ]
 }
