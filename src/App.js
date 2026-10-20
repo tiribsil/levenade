@@ -24,7 +24,24 @@ export default function App() {
   const [carregandoStats, setCarregandoStats] = useState(false);
   const [filtroArea, setFiltroArea] = useState('Todas');
 
-  const emModoView = window.location.hash === '#view' || window.location.pathname.endsWith('/view');
+  const [emModoView, setEmModoView] = useState(() => (
+    window.location.hash === '#view' || window.location.pathname.endsWith('/view')
+  ));
+
+  useEffect(() => {
+    function atualizarModoView() {
+      setEmModoView(
+        window.location.hash === '#view' || window.location.pathname.endsWith('/view')
+      );
+    }
+
+    window.addEventListener('hashchange', atualizarModoView);
+    window.addEventListener('popstate', atualizarModoView);
+    return () => {
+      window.removeEventListener('hashchange', atualizarModoView);
+      window.removeEventListener('popstate', atualizarModoView);
+    };
+  }, []);
 
   async function entrarComRA(event) {
     event.preventDefault();
