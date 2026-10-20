@@ -144,6 +144,75 @@ export default function App() {
     }
   }, [emModoView]);
 
+  // TELA EXTRA 1: Visualizador de questão ampliada (da Galeria)
+  if (questaoDetalhe) {
+    const areaAtual = areas[questaoDetalhe] || 'Outras';
+    const listaArea = questoesPorArea[areaAtual] || [];
+    const indiceNaArea = listaArea.indexOf(questaoDetalhe);
+
+    return (
+      <div style={styles.container}>
+        <div style={styles.card}>
+          <div style={styles.header}>
+            <span>Área: <strong>{areaAtual}</strong></span>
+            <span>
+              {indiceNaArea + 1} de {listaArea.length}
+              <small style={{ color: '#888', marginLeft: '6px' }}>
+                ({formatarTituloQuestao(questaoDetalhe)})
+              </small>
+            </span>
+          </div>
+
+          <div style={styles.boxTexto}>
+            <img 
+              key={questaoDetalhe}
+              src={imagensQuestoes[questaoDetalhe]} 
+              alt={`Questão ${questaoDetalhe}`} 
+              onLoad={(e) => {
+                setLarguraTotal(e.currentTarget.naturalWidth > 500);
+              }}
+              style={{ 
+                width: larguraTotal ? '100%' : '50%', 
+                height: 'auto', 
+                display: 'block', 
+                margin: '0 auto' 
+              }} 
+            />
+          </div>
+
+          <div style={{ ...styles.buttonGroup, justifyContent: emGaleria ? 'space-between' : 'center' }}>
+            {emGaleria && (
+              <button 
+                onClick={() => setQuestaoDetalhe(listaArea[indiceNaArea - 1])}
+                disabled={indiceNaArea === 0}
+                style={indiceNaArea === 0 ? styles.btnDisabled : styles.btnSecondary}
+              >
+                Questão Anterior
+              </button>
+            )}
+
+            <button 
+              onClick={() => setQuestaoDetalhe(null)}
+              style={styles.btnSecondary}
+            >
+              Voltar
+            </button>
+
+            {emGaleria && (
+              <button 
+                onClick={() => setQuestaoDetalhe(listaArea[indiceNaArea + 1])}
+                disabled={indiceNaArea === listaArea.length - 1}
+                style={indiceNaArea === listaArea.length - 1 ? styles.btnDisabled : styles.btnSecondary}
+              >
+                Próxima Questão
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // TELA DE RELATÓRIO E ESTATÍSTICAS (/view)
   if (emModoView) {
     return (
@@ -204,9 +273,22 @@ export default function App() {
                 {dadosFiltrados.map((item, idx) => (
                   <tr key={item.questao_id} style={{ borderBottom: '1px solid #eee' }}>
                     <td style={{ padding: '10px', fontWeight: 'bold', color: '#666' }}>{idx + 1}º</td>
-                    <td style={{ padding: '10px', fontWeight: 'bold' }}>
-                      {formatarTituloQuestao(item.questao_id)}
-                      <small style={{ color: '#888', display: 'block' }}>({item.questao_id})</small>
+                    <td 
+                      onClick={() => setQuestaoDetalhe(item.questao_id)}
+                      style={{ 
+                        padding: '10px', 
+                        fontWeight: 'bold', 
+                        cursor: 'pointer', 
+                        color: '#0066cc' 
+                      }}
+                      title="Ver questão"
+                    >
+                      <span style={{ textDecoration: 'underline' }}>
+                        {formatarTituloQuestao(item.questao_id)}
+                      </span>
+                      <small style={{ color: '#888', display: 'block', textDecoration: 'none' }}>
+                        ({item.questao_id})
+                      </small>
                     </td>
                     <td style={{ padding: '10px', color: '#555' }}>{areas[item.questao_id] || 'Outras'}</td>
                     <td style={{ padding: '10px', textAlign: 'center', fontWeight: 'bold', color: '#0066cc', fontSize: '15px' }}>
@@ -220,71 +302,6 @@ export default function App() {
                 ))}
               </tbody>
             </table>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // TELA EXTRA 1: Visualizador de questão ampliada (da Galeria)
-  if (emGaleria && questaoDetalhe) {
-    const areaAtual = areas[questaoDetalhe] || 'Outras';
-    const listaArea = questoesPorArea[areaAtual] || [];
-    const indiceNaArea = listaArea.indexOf(questaoDetalhe);
-
-    return (
-      <div style={styles.container}>
-        <div style={styles.card}>
-          <div style={styles.header}>
-            <span>Área: <strong>{areaAtual}</strong></span>
-            <span>
-              {indiceNaArea + 1} de {listaArea.length}
-              <small style={{ color: '#888', marginLeft: '6px' }}>
-                ({formatarTituloQuestao(questaoDetalhe)})
-              </small>
-            </span>
-          </div>
-
-          <div style={styles.boxTexto}>
-            <img 
-              key={questaoDetalhe}
-              src={imagensQuestoes[questaoDetalhe]} 
-              alt={`Questão ${questaoDetalhe}`} 
-              onLoad={(e) => {
-                setLarguraTotal(e.currentTarget.naturalWidth > 500);
-              }}
-              style={{ 
-                width: larguraTotal ? '100%' : '50%', 
-                height: 'auto', 
-                display: 'block', 
-                margin: '0 auto' 
-              }} 
-            />
-          </div>
-
-          <div style={styles.buttonGroup}>
-            <button 
-              onClick={() => setQuestaoDetalhe(listaArea[indiceNaArea - 1])}
-              disabled={indiceNaArea === 0}
-              style={indiceNaArea === 0 ? styles.btnDisabled : styles.btnSecondary}
-            >
-              ← Questão Anterior
-            </button>
-
-            <button 
-              onClick={() => setQuestaoDetalhe(null)}
-              style={styles.btnSecondary}
-            >
-              Voltar para a Galeria
-            </button>
-
-            <button 
-              onClick={() => setQuestaoDetalhe(listaArea[indiceNaArea + 1])}
-              disabled={indiceNaArea === listaArea.length - 1}
-              style={indiceNaArea === listaArea.length - 1 ? styles.btnDisabled : styles.btnSecondary}
-            >
-              Próxima Questão →
-            </button>
           </div>
         </div>
       </div>
